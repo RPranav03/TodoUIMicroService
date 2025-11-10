@@ -1,0 +1,45 @@
+name: Build and Push to ACR
+
+on:
+  workflow_dispatch:  # Isse tum manually GitHub se trigger kar sakte ho
+
+permissions:
+  id-token: write
+  contents: read
+  
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: todo-ui
+      IMAGE_TAG: v1
+      ACR_NAME: acrdevtodoapp20250910
+      ACR_LOGIN_SERVER: acrdevtodoapp20250910.azurecr.io
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: Azure/login@v2.3.0
+        with:
+          client-id: c6bb448b-a8d7-4158-9b70-af1e6557b8a4
+          tenant-id: 0a5f0b79-84bf-4989-a275-0c7d69a0e25f
+          subscription-id: 2c4130d9-0278-4b5a-8dbf-feaf20816e08
+
+      - name: Log in to ACR
+        run: |
+          az acr login --name $ACR_NAME
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      - name: Tag Docker Image for ACR
+        run: |
+          docker tag $IMAGE_NAME:$IMAGE_TAG $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+
+      - name: Push Docker Image to ACR
+        run: |
+          docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
